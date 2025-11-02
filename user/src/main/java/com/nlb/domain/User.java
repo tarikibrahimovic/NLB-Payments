@@ -1,4 +1,4 @@
-package com.nlb.model;
+package com.nlb.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class User extends BaseEntity{
 
     @Id
     private UUID id;

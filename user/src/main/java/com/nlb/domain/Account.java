@@ -1,4 +1,4 @@
-package com.nlb.model;
+package com.nlb.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,7 +8,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "accounts")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Account {
+public class Account extends BaseEntity{
 
     @Id
     private UUID id;
@@ -27,6 +27,6 @@ public class Account {
     @Column(nullable = false, length = 10)
     private AccountStatus status;
 
-//    @Version
-//    private Long version;
+    @Version
+    private Long version;
 }

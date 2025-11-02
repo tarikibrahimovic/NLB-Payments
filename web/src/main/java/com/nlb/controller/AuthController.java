@@ -1,9 +1,11 @@
 package com.nlb.controller;
 
+import com.nlb.dto.auth.LoginRequest;
+import com.nlb.dto.auth.RegisterRequest;
+import com.nlb.dto.auth.RegisterResponse;
 import com.nlb.interfaces.AuthService;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import com.nlb.interfaces.RegistrationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +21,14 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService auth;
+    private final RegistrationService registrationService;
+
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public RegisterResponse register(@RequestBody @Valid RegisterRequest req) {
+        var res = registrationService.register(req.getEmail(), req.getFullName(), 8);
+        return new RegisterResponse(res.userId().toString(), res.accountId().toString(), res.token());
+    }
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
@@ -27,7 +37,6 @@ public class AuthController {
         return Map.of("token", token);
     }
 
-    // 2) Alternativni login po userId (korisno za testove)
     @PostMapping("/login-by-id/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public Map<String, String> loginById(@PathVariable UUID userId,
@@ -36,9 +45,4 @@ public class AuthController {
         return Map.of("token", token);
     }
 
-    @Data
-    public static class LoginRequest {
-        @Email @NotBlank
-        private String email;
-    }
 }

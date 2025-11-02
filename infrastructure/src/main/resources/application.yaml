@@ -1,3 +1,19 @@
 spring:
-  profiles:
-    active: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/nlb
+    username: nlb
+    password: nlb
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # za početak; kasnije prebaci na validate + Flyway
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+      hibernate.format_sql: true
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace

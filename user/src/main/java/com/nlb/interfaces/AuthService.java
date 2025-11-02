@@ -4,6 +4,6 @@ import java.util.UUID;
 
 public interface AuthService {
 
-    public String issueTokenForEmail(String email, long hours);
-    public String issueTokenForUserId(UUID userId, long hours);
+    String issueTokenForEmail(String email, long hours);
+    String issueTokenForUserId(UUID userId, long hours);
 }
