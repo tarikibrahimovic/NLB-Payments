@@ -20,8 +20,9 @@ public class Account extends BaseEntity{
     @Column(name = "balance_cents", nullable = false)
     private long balanceCents;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 3)
-    private String currency;
+    private Currency currency;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)

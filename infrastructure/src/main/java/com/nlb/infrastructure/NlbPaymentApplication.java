@@ -6,12 +6,12 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = "com.nlb")
-@EnableJpaRepositories(basePackages = "com.nlb")   // <-- picks up com.nlb.repository.*
+@EnableJpaRepositories(basePackages = "com.nlb")
 @EntityScan(basePackages = "com.nlb")
-public class InfrastructureApplication {
+public class NlbPaymentApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(InfrastructureApplication.class, args);
+        SpringApplication.run(NlbPaymentApplication.class, args);
     }
 
 }

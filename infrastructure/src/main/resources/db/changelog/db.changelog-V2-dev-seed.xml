@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="V2-1-seed-users" author="dev-team">
+        <insert tableName="users">
+            <column name="id" value="a12b34cd-56ef-47ab-89cd-001122334455"/>
+            <column name="email" value="dev.user.a@example.com"/>
+            <column name="full_name" value="Dev Korisnik A"/>
+            <column name="status" value="ACTIVE"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="users">
+            <column name="id" value="b23c45de-67fa-48bc-9ade-112233445566"/>
+            <column name="email" value="dev.user.b@example.com"/>
+            <column name="full_name" value="Dev Korisnik B"/>
+            <column name="status" value="ACTIVE"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="V2-2-seed-accounts" author="dev-team">
+        <insert tableName="accounts">
+            <column name="id" value="a1a2b3c4-d5e6-47f8-9123-223344556677"/>
+            <column name="owner_id" value="a12b34cd-56ef-47ab-89cd-001122334455"/>
+            <column name="balance_cents" value="10000"/>
+            <column name="currency" value="EUR"/>
+            <column name="status" value="ACTIVE"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="accounts">
+            <column name="id" value="a2b3c4d5-e6f7-48a9-9345-334455667788"/>
+            <column name="owner_id" value="a12b34cd-56ef-47ab-89cd-001122334455"/>
+            <column name="balance_cents" value="0"/>
+            <column name="currency" value="EUR"/>
+            <column name="status" value="ACTIVE"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="accounts">
+            <column name="id" value="b1b2c3d4-e5f6-47a8-9456-445566778899"/>
+            <column name="owner_id" value="b23c45de-67fa-48bc-9ade-112233445566"/>
+            <column name="balance_cents" value="2500"/>
+            <column name="currency" value="EUR"/>
+            <column name="status" value="ACTIVE"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="V2-3-seed-transaction-history" author="dev-team">
+        <insert tableName="payment_orders">
+            <column name="id" value="9f1a0c2e-3b7d-4a5f-9b8c-1d2e3f4a5b6c"/>
+            <column name="idempotency_key" value="seed-key-1"/>
+            <column name="initiated_by_user_id" value="a12b34cd-56ef-47ab-89cd-001122334455"/>
+            <column name="source_account_id" value="a1a2b3c4-d5e6-47f8-9123-223344556677"/>
+            <column name="total_amount_cents" value="2500"/>
+            <column name="currency" value="EUR"/>
+            <column name="status" value="COMPLETED"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="payment_order_items">
+            <column name="id" value="2c7b5e1a-6d3f-4c2b-8a9b-0f1e2d3c4b5a"/>
+            <column name="payment_order_id" value="9f1a0c2e-3b7d-4a5f-9b8c-1d2e3f4a5b6c"/>
+            <column name="destination_account_id" value="b1b2c3d4-e5f6-47a8-9456-445566778899"/>
+            <column name="amount_cents" value="2500"/>
+            <column name="status" value="SUCCESS"/>
+            <column name="order_key" value="seed-key-1#0"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="transactions">
+            <column name="id" value="7a3d2c1b-5e6f-4a9c-b8ad-9c8b7a6d5e4f"/>
+            <column name="source_account_id" value="a1a2b3c4-d5e6-47f8-9123-223344556677"/>
+            <column name="destination_account_id" value="b1b2c3d4-e5f6-47a8-9456-445566778899"/>
+            <column name="amount_cents" value="2500"/>
+            <column name="currency" value="EUR"/>
+            <column name="payment_order_id" value="9f1a0c2e-3b7d-4a5f-9b8c-1d2e3f4a5b6c"/>
+            <column name="payment_order_item_id" value="2c7b5e1a-6d3f-4c2b-8a9b-0f1e2d3c4b5a"/>
+            <column name="idempotency_key" value="seed-key-1"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

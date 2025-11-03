@@ -1,6 +1,7 @@
 package com.nlb.controller;
 
 import com.nlb.dto.auth.LoginRequest;
+import com.nlb.dto.auth.LoginResponse;
 import com.nlb.dto.auth.RegisterRequest;
 import com.nlb.dto.auth.RegisterResponse;
 import com.nlb.interfaces.AuthService;
@@ -11,8 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
@@ -32,17 +34,27 @@ public class AuthController {
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
-    public Map<String, String> login(@RequestBody @Validated LoginRequest req) {
-        String token = auth.issueTokenForEmail(req.getEmail(), 8);
-        return Map.of("token", token);
+    public LoginResponse login(@RequestBody @Valid LoginRequest req) {
+        var result = auth.issueTokenForEmail(req.getEmail(), 8);
+
+        List<String> accountIdStrings = result.accountIds().stream()
+                .map(UUID::toString)
+                .collect(Collectors.toList());
+
+        return new LoginResponse(result.token(), accountIdStrings);
     }
 
     @PostMapping("/login-by-id/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public Map<String, String> loginById(@PathVariable UUID userId,
-                                         @RequestParam(defaultValue = "8") long hours) {
-        String token = auth.issueTokenForUserId(userId, hours);
-        return Map.of("token", token);
+    public LoginResponse loginById(@PathVariable UUID userId,
+                                   @RequestParam(defaultValue = "8") long hours) {
+        var result = auth.issueTokenForUserId(userId, hours);
+
+        List<String> accountIdStrings = result.accountIds().stream()
+                .map(UUID::toString)
+                .collect(Collectors.toList());
+
+        return new LoginResponse(result.token(), accountIdStrings);
     }
 
 }

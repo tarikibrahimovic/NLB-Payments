@@ -1,10 +1,7 @@
 package com.nlb.service;
 
+import com.nlb.domain.*;
 import com.nlb.interfaces.RegistrationService;
-import com.nlb.domain.Account;
-import com.nlb.domain.AccountStatus;
-import com.nlb.domain.User;
-import com.nlb.domain.UserStatus;
 import com.nlb.repository.AccountRepository;
 import com.nlb.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -28,6 +25,8 @@ public class DefaultRegistrationService implements RegistrationService {
     private final AccountRepository accounts;
     private final JwtEncoder jwtEncoder;
 
+    private final String ISSUER = "nlb-dev";
+
     @Override
     @Transactional
     public RegistrationResult register(String email, String fullName, long tokenHours) {
@@ -46,13 +45,13 @@ public class DefaultRegistrationService implements RegistrationService {
         acc.setId(UUID.randomUUID());
         acc.setOwner(user);
         acc.setBalanceCents(0L);
-        acc.setCurrency("EUR");
+        acc.setCurrency(Currency.EUR);
         acc.setStatus(AccountStatus.ACTIVE);
         accounts.save(acc);
 
         var now = Instant.now();
         var claims = JwtClaimsSet.builder()
-                .issuer("nlb-dev")
+                .issuer(ISSUER)
                 .issuedAt(now)
                 .expiresAt(now.plus(Duration.ofHours(tokenHours)))
                 .subject(user.getId().toString())

@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/transfers")
 @RequiredArgsConstructor
-@Validated // Potrebno da bi @NotBlank na header-u radilo
+@Validated
 public class TransferController {
 
     private final TransferBatchService transferBatchService;
@@ -31,13 +31,10 @@ public class TransferController {
     public ResponseEntity<TransferBatchResponse> executeBatchTransfer(
             @RequestHeader("Idempotency-Key") @NotBlank(message = "Idempotency-Key header is required") String idempotencyKey,
             @RequestBody @Valid TransferBatchRequest request,
-            Authentication authentication // Spring Security će automatski ubaciti ovo
+            Authentication authentication
     ) {
-        // 1. Izdvojimo ID korisnika iz JWT tokena
-        // Postavili smo 'subject' da bude UUID korisnika tokom registracije/logina
         UUID initiatedByUserId = UUID.fromString(authentication.getName());
 
-        // 2. Mapiramo DTO u interni servisni model
         var serviceRequest = new BatchTransferRequest(
                 idempotencyKey,
                 initiatedByUserId,
@@ -45,29 +42,23 @@ public class TransferController {
                 mapToServiceItems(request.getItems())
         );
 
-        // 3. Pozivamo servisnu logiku
         var serviceResponse = transferBatchService.executeBatchTransfer(serviceRequest);
 
-        // 4. Mapiramo odgovor servisa nazad u DTO
         var responseDto = new TransferBatchResponse(
                 serviceResponse.paymentOrderId().toString(),
-                serviceResponse.status().name(), // npr. "COMPLETED"
+                serviceResponse.status().name(),
                 serviceResponse.message()
         );
 
-        // 5. Vraćamo HTTP odgovor
-        // Ako je status FAILED, možemo vratiti 400 Bad Request,
-        // a ako je COMPLETED, vraćamo 200 OK.
         HttpStatus status = switch (serviceResponse.status()) {
             case COMPLETED -> HttpStatus.OK;
-            case FAILED -> HttpStatus.BAD_REQUEST; // Poslovna greška (npr. nema sredstava)
-            case PENDING -> HttpStatus.ACCEPTED; // Iako ga mi ne koristimo, za budućnost
+            case FAILED -> HttpStatus.BAD_REQUEST;
+            case PENDING -> HttpStatus.ACCEPTED;
         };
 
         return new ResponseEntity<>(responseDto, status);
     }
 
-    // Helper metoda za mapiranje DTO liste u servisnu listu
     private List<BatchItem> mapToServiceItems(List<TransferBatchItemRequest> dtoItems) {
         return dtoItems.stream()
                 .map(dto -> new BatchItem(dto.getDestinationAccountId(), dto.getAmount()))

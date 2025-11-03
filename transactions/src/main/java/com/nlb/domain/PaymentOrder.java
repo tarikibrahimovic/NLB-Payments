@@ -9,7 +9,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "payment_orders", indexes = {
-        // Ključni indeks za idempotenciju. Mora biti UNIQUE.
         @Index(name = "idx_paymentorder_idempotency_key", columnList = "idempotency_key", unique = true)
 })
 @Getter
@@ -27,13 +26,13 @@ public class PaymentOrder extends BaseEntity{
     private String idempotencyKey;
 
     @Column(name = "initiated_by_user_id", nullable = false)
-    private UUID initiatedByUserId; // Korisnik koji je vlasnik JWT tokena
+    private UUID initiatedByUserId;
 
     @Column(name = "source_account_id", nullable = false)
     private UUID sourceAccountId;
 
     @Column(name = "total_amount_cents", nullable = false)
-    private long totalAmountCents; // Suma svih PaymentOrderItem-a (za brzu proveru salda)
+    private long totalAmountCents;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 3)
@@ -43,8 +42,6 @@ public class PaymentOrder extends BaseEntity{
     @Column(nullable = false, length = 20)
     private PaymentOrderStatus status;
 
-    // CascadeType.ALL: Ako obrišemo Order, brišu se i svi njegovi Item-i.
-    // mappedBy: Označava da PaymentOrderItem ima polje 'paymentOrder' koje upravlja vezom.
     @OneToMany(mappedBy = "paymentOrder", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Builder.Default
     private List<PaymentOrderItem> items = new ArrayList<>();

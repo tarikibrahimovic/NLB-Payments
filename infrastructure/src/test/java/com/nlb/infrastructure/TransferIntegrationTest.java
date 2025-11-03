@@ -26,47 +26,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.springframework.transaction.annotation.Transactional; // <--- IMPORTUJ OVO
+import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest(classes = InfrastructureApplication.class) // <--- (Ne zaboravi rešenje od malopre)
-@AutoConfigureMockMvc // Omogućava nam da simuliramo HTTP pozive (MockMvc)
-@Testcontainers // Aktivira Testcontainers
-@ActiveProfiles("test") // Opciono, ako imate testni profil
+@SpringBootTest(classes = NlbPaymentApplication.class)
+@AutoConfigureMockMvc
+@Testcontainers
+@ActiveProfiles("test")
 @Transactional
 public class TransferIntegrationTest {
 
     @Autowired
-    private MockMvc mvc; // Za slanje HTTP zahteva
+    private MockMvc mvc;
 
     @Autowired
-    private ObjectMapper objectMapper; // Za konverziju objekata u JSON
+    private ObjectMapper objectMapper;
 
     @Autowired
-    private AccountRepository accountRepository; // Za direktnu proveru stanja u bazi
+    private AccountRepository accountRepository;
 
     private RegisterResponse userA;
     private RegisterResponse userB;
 
     @BeforeEach
     void setUp() throws Exception {
-        // Pomoćna metoda za registraciju korisnika
         userA = registerUser("userA@example.com", "User A");
         userB = registerUser("userB@example.com", "User B");
 
-        // "Uplatimo" 100 EUR korisniku A da ima sa čim da radi
         Account accountA = accountRepository.findById(UUID.fromString(userA.getAccountId())).get();
-        accountA.setBalanceCents(10000L); // 100.00 EUR
+        accountA.setBalanceCents(10000L);
         accountRepository.save(accountA);
     }
 
-    /**
-     * Use Case 1: Transfer "Happy Path"
-     */
     @Test
     void shouldExecuteBatchTransferSuccessfully() throws Exception {
         var item = new TransferBatchItemRequest();
         item.setDestinationAccountId(UUID.fromString(userB.getAccountId()));
-        item.setAmount(new BigDecimal("25.50")); // 25.50 EUR
+        item.setAmount(new BigDecimal("25.50"));
 
         var request = new TransferBatchRequest();
         request.setSourceAccountId(UUID.fromString(userA.getAccountId()));
@@ -76,27 +71,22 @@ public class TransferIntegrationTest {
 
         mvc.perform(post("/api/v1/transfers/batch")
                         .header("Idempotency-Key", idempotencyKey)
-                        .header("Authorization", "Bearer " + userA.getToken()) // Koristimo token korisnika A
+                        .header("Authorization", "Bearer " + userA.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.message").value("Transfer successful"));
 
-        // Proverimo stanje u bazi
         Account accountA = accountRepository.findById(UUID.fromString(userA.getAccountId())).get();
         Account accountB = accountRepository.findById(UUID.fromString(userB.getAccountId())).get();
 
-        assertThat(accountA.getBalanceCents()).isEqualTo(10000L - 2550L); // 74.50
-        assertThat(accountB.getBalanceCents()).isEqualTo(2550L); // 25.50
+        assertThat(accountA.getBalanceCents()).isEqualTo(10000L - 2550L);
+        assertThat(accountB.getBalanceCents()).isEqualTo(2550L);
     }
 
-    /**
-     * Use Case 2: Idempotency
-     */
     @Test
     void shouldReturnSameResultForIdempotentRequest() throws Exception {
-        // ... (isti setup kao gore)
         var item = new TransferBatchItemRequest();
         item.setDestinationAccountId(UUID.fromString(userB.getAccountId()));
         item.setAmount(new BigDecimal("10.00"));
@@ -105,9 +95,8 @@ public class TransferIntegrationTest {
         request.setSourceAccountId(UUID.fromString(userA.getAccountId()));
         request.setItems(List.of(item));
 
-        String idempotencyKey = UUID.randomUUID().toString(); // ISTI ključ
+        String idempotencyKey = UUID.randomUUID().toString();
 
-        // 1. Prvi poziv (izvršava se)
         mvc.perform(post("/api/v1/transfers/batch")
                         .header("Idempotency-Key", idempotencyKey)
                         .header("Authorization", "Bearer " + userA.getToken())
@@ -116,7 +105,6 @@ public class TransferIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
-        // 2. Drugi poziv (vraća snimljen rezultat)
         mvc.perform(post("/api/v1/transfers/batch")
                         .header("Idempotency-Key", idempotencyKey)
                         .header("Authorization", "Bearer " + userA.getToken())
@@ -126,17 +114,12 @@ public class TransferIntegrationTest {
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.message").value("Request already processed"));
 
-        // Proverimo stanje - novac je skinut SAMO JEDNOM
         Account accountA = accountRepository.findById(UUID.fromString(userA.getAccountId())).get();
-        assertThat(accountA.getBalanceCents()).isEqualTo(10000L - 1000L); // 90.00
+        assertThat(accountA.getBalanceCents()).isEqualTo(10000L - 1000L);
     }
 
-    /**
-     * Use Case 3: Neuspeh (Insufficient Funds)
-     */
     @Test
     void shouldFailTransferDueToInsufficientFunds() throws Exception {
-        // Pokušavamo da pošaljemo 120 EUR, a imamo 100 EUR
         var item = new TransferBatchItemRequest();
         item.setDestinationAccountId(UUID.fromString(userB.getAccountId()));
         item.setAmount(new BigDecimal("120.00"));
@@ -152,16 +135,13 @@ public class TransferIntegrationTest {
                         .header("Authorization", "Bearer " + userA.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest()) // Vraćamo 400
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("FAILED"))
                 .andExpect(jsonPath("$.message").value("Insufficient funds"));
 
-        // Proverimo stanje - NIŠTA se nije promenilo
         Account accountA = accountRepository.findById(UUID.fromString(userA.getAccountId())).get();
-        assertThat(accountA.getBalanceCents()).isEqualTo(10000L); // Ostalo 100.00
+        assertThat(accountA.getBalanceCents()).isEqualTo(10000L);
     }
-
-    // --- Pomoćna (helper) metoda ---
 
     private RegisterResponse registerUser(String email, String fullName) throws Exception {
         var req = new RegisterRequest();
